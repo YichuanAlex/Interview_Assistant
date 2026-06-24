@@ -156,15 +156,15 @@ func (sm *StateManager) ToggleVisibility() bool {
 	}
 
 	if sm.windowState.Visible {
-		// 隐藏前先释放输入法焦点，避免候选框残留
+		// 隐藏前先取消输入法编辑状态，避免候选框残留
 		if sm.hwnd != 0 {
-			platform.ResignFirstResponder(sm.hwnd)
+			platform.CancelInputMethod(sm.hwnd)
 		}
 		if sm.emitEvent != nil {
 			sm.emitEvent("before-hide")
 		}
-		// 短暂延迟确保输入法候选框消失后再隐藏窗口
-		time.Sleep(100 * time.Millisecond)
+		// 等待输入法候选框消失；系统拼音需要更长时间
+		time.Sleep(250 * time.Millisecond)
 		runtime.WindowHide(sm.ctx)
 		logger.Println("窗口已隐藏")
 	} else {

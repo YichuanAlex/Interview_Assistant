@@ -120,6 +120,19 @@ void ResignFirstResponderC(void* nsWindow) {
     });
 }
 
+// 强制取消当前输入法的编辑状态（unmarkText），用于隐藏窗口前消除候选条
+void CancelInputMethodC(void* nsWindow) {
+    if (nsWindow == NULL) return;
+    NSWindow* window = (__bridge NSWindow*)nsWindow;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        NSResponder* firstResponder = [window firstResponder];
+        if (firstResponder && [firstResponder respondsToSelector:@selector(unmarkText)]) {
+            [(id)firstResponder unmarkText];
+        }
+        [window makeFirstResponder:nil];
+    });
+}
+
 // 设置窗口接受鼠标事件时自动成为 key window
 void SetWindowAcceptsMouseMovedC(void* nsWindow) {
     if (nsWindow == NULL) return;
@@ -297,6 +310,13 @@ func RemoveFocus(hwnd WindowHandle) error {
 func ResignFirstResponder(hwnd WindowHandle) error {
 	window := unsafe.Pointer(uintptr(hwnd))
 	C.ResignFirstResponderC(window)
+	return nil
+}
+
+// CancelInputMethod 强制取消当前输入法的编辑状态，消除候选框
+func CancelInputMethod(hwnd WindowHandle) error {
+	window := unsafe.Pointer(uintptr(hwnd))
+	C.CancelInputMethodC(window)
 	return nil
 }
 

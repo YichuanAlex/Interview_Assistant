@@ -27,10 +27,5 @@
         <string>Interview_Assistant 需要访问麦克风以支持系统级快捷键录制与相关桌面交互能力。</string>
         
         
-        <key>NSAppTransportSecurity</key>
-        <dict>
-            <key>NSAllowsLocalNetworking</key>
-            <true/>
-        </dict>
     </dict>
 </plist>
