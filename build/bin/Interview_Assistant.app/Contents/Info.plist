@@ -1,0 +1,36 @@
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+    <dict>
+        <key>CFBundlePackageType</key>
+        <string>APPL</string>
+        <key>CFBundleName</key>
+        <string>Interview_Assistant</string>
+        <key>CFBundleExecutable</key>
+        <string>Interview_Assistant</string>
+        <key>CFBundleIdentifier</key>
+        <string>com.wails.Interview_Assistant</string>
+        <key>CFBundleVersion</key>
+        <string>1.0.3.0</string>
+        <key>CFBundleGetInfoString</key>
+        <string>Desktop AI assistant for screenshot-based problem solving</string>
+        <key>CFBundleShortVersionString</key>
+        <string>1.0.3.0</string>
+        <key>CFBundleIconFile</key>
+        <string>iconfile</string>
+        <key>LSMinimumSystemVersion</key>
+        <string>10.13.0</string>
+        <key>NSHighResolutionCapable</key>
+        <string>true</string>
+        <key>NSHumanReadableCopyright</key>
+        <string>Copyright 2026 Interview_Assistant contributors.</string>
+        <key>NSMicrophoneUsageDescription</key>
+        <string>Interview_Assistant 需要访问麦克风以支持系统级快捷键录制与相关桌面交互能力。</string>
+        
+        
+        <key>NSAppTransportSecurity</key>
+        <dict>
+            <key>NSAllowsLocalNetworking</key>
+            <true/>
+        </dict>
+    </dict>
+</plist>
