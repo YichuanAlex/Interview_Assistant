@@ -196,3 +196,13 @@ func (a *App) ClearInterviewContext() string {
 	a.coach.ClearHistory()
 	return ""
 }
+
+// MinimiseWindow 最小化窗口
+func (a *App) MinimiseWindow() {
+	runtime.WindowMinimise(a.ctx)
+}
+
+// ToggleMaximiseWindow 切换窗口最大化状态
+func (a *App) ToggleMaximiseWindow() {
+	runtime.WindowToggleMaximise(a.ctx)
+}

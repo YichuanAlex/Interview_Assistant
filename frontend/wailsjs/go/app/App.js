@@ -74,6 +74,10 @@ export function IsTranscribing() {
   return window['go']['app']['App']['IsTranscribing']();
 }
 
+export function MinimiseWindow() {
+  return window['go']['app']['App']['MinimiseWindow']();
+}
+
 export function MoveWindow(arg1, arg2) {
   return window['go']['app']['App']['MoveWindow'](arg1, arg2);
 }
@@ -164,6 +168,10 @@ export function TestConnection(arg1, arg2) {
 
 export function ToggleClickThrough() {
   return window['go']['app']['App']['ToggleClickThrough']();
+}
+
+export function ToggleMaximiseWindow() {
+  return window['go']['app']['App']['ToggleMaximiseWindow']();
 }
 
 export function ToggleVisibility() {

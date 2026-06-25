@@ -90,9 +90,18 @@ func (s *TranscriptionService) Start(device int, deviceName string, model string
 		args = append(args, "--role", s.role)
 	}
 
-	cmd := exec.Command(s.pythonPath, args...)
-	cmd.Dir = filepath.Dir(s.scriptPath)
-	cmd.Env = os.Environ()
+	var cmd *exec.Cmd
+	if runtime.GOOS == "darwin" {
+		// macOS 通过交互式 shell 启动，以加载用户 ~/.zshrc 等环境（conda/venv 依赖）
+		scriptDir := filepath.Dir(s.scriptPath)
+		cmdStr := fmt.Sprintf("cd %q && %s %s", scriptDir, s.pythonPath, strings.Join(args, " "))
+		cmd = exec.Command("/bin/zsh", "-i", "-c", cmdStr)
+		cmd.Env = os.Environ()
+	} else {
+		cmd = exec.Command(s.pythonPath, args...)
+		cmd.Dir = filepath.Dir(s.scriptPath)
+		cmd.Env = os.Environ()
+	}
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
@@ -208,6 +217,16 @@ func (s *TranscriptionService) waitExit() {
 }
 
 func findPython() string {
+	// 优先使用用户交互 shell 环境中的 python3（加载 ~/.zshrc / ~/.bash_profile 等）
+	if runtime.GOOS == "darwin" {
+		for _, shell := range []string{"zsh", "bash"} {
+			path, err := resolvePythonViaShell(shell)
+			if err == nil && path != "" {
+				return path
+			}
+		}
+	}
+
 	candidates := []string{"python3", "python"}
 	if runtime.GOOS == "windows" {
 		candidates = []string{"python.exe", "python3.exe"}
@@ -218,6 +237,19 @@ func findPython() string {
 		}
 	}
 	return ""
+}
+
+func resolvePythonViaShell(shell string) (string, error) {
+	cmd := exec.Command("/bin/"+shell, "-i", "-c", "command -v python3")
+	out, err := cmd.Output()
+	if err != nil {
+		return "", err
+	}
+	path := strings.TrimSpace(string(out))
+	if path == "" {
+		return "", fmt.Errorf("未找到 python3")
+	}
+	return path, nil
 }
 
 func findScript() string {

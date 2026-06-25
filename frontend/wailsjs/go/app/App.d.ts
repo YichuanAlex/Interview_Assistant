@@ -40,6 +40,8 @@ export function IsInterruptThinkingEnabled():Promise<boolean>;
 
 export function IsTranscribing():Promise<boolean>;
 
+export function MinimiseWindow():Promise<void>;
+
 export function MoveWindow(arg1:number,arg2:number):Promise<void>;
 
 export function OpenMicrophoneSettings():Promise<void>;
@@ -85,6 +87,8 @@ export function StopTranscription():Promise<string>;
 export function TestConnection(arg1:string,arg2:string):Promise<string>;
 
 export function ToggleClickThrough():Promise<void>;
+
+export function ToggleMaximiseWindow():Promise<void>;
 
 export function ToggleVisibility():Promise<void>;
 

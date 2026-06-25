@@ -111,7 +111,8 @@ export const useSolutionStore = defineStore('solution', () => {
   // ---- Core actions ----
 
   function selectHistory(idx) {
-    if (history.value[idx]) activeHistoryIndex.value = idx
+    // 单轮模式下不再切换历史题目
+    activeHistoryIndex.value = 0
   }
 
   function handleStreamStart(keepContext, isFollowUp = false) {
@@ -128,34 +129,41 @@ export const useSolutionStore = defineStore('solution', () => {
     ocrText.value = ''
     if (stallTimer) clearTimeout(stallTimer)
 
-    const shouldAppend = isFollowUp || (keepContext && !shouldOverwriteHistory.value)
-    if (shouldAppend && history.value.length > 0) {
-      const currentItem = history.value[0]
-      const lastRound = getCurrentRound(currentItem)
-      if (lastRound && lastRound.error) {
-        lastRound.userScreenshot = pendingUserScreenshot || lastRound.userScreenshot
-        lastRound.userText = pendingUserText || lastRound.userText
-        lastRound.thinking = ''
-        lastRound.thinkingStatus = 'Thinking Process'
-        lastRound.aiResponse = ''
-        lastRound.error = null
-      } else {
-        addRoundToItem(currentItem, pendingUserScreenshot, pendingUserText)
-      }
-      activeHistoryIndex.value = 0
-      pendingUserScreenshot = ''
-      pendingUserText = ''
+    // 单轮多对话模式：只保留一个当前对话，不再维护多个历史题目
+    if (history.value.length === 0) {
+      history.value.push(createHistoryItem(pendingUserScreenshot, pendingUserText))
     } else {
-      if (shouldOverwriteHistory.value && history.value.length > 0) {
-        history.value[0] = createHistoryItem(pendingUserScreenshot, pendingUserText)
-        shouldOverwriteHistory.value = false
+      const shouldAppend = isFollowUp || (keepContext && !shouldOverwriteHistory.value)
+      const currentItem = history.value[0]
+      if (shouldAppend) {
+        const lastRound = getCurrentRound(currentItem)
+        if (lastRound && lastRound.error) {
+          lastRound.userScreenshot = pendingUserScreenshot || lastRound.userScreenshot
+          lastRound.userText = pendingUserText || lastRound.userText
+          lastRound.thinking = ''
+          lastRound.thinkingStatus = 'Thinking Process'
+          lastRound.aiResponse = ''
+          lastRound.error = null
+        } else {
+          addRoundToItem(currentItem, pendingUserScreenshot, pendingUserText)
+        }
       } else {
-        history.value.unshift(createHistoryItem(pendingUserScreenshot, pendingUserText))
+        // 新题目：重置当前对话的 rounds
+        currentItem.rounds = [{
+          userScreenshot: pendingUserScreenshot || '',
+          userText: pendingUserText || '',
+          thinking: '',
+          thinkingStatus: 'Thinking Process',
+          thinkingDuration: 0,
+          aiResponse: '',
+          error: null,
+        }]
       }
-      activeHistoryIndex.value = 0
-      pendingUserScreenshot = ''
-      pendingUserText = ''
+      shouldOverwriteHistory.value = false
     }
+    activeHistoryIndex.value = 0
+    pendingUserScreenshot = ''
+    pendingUserText = ''
   }
 
   function handleStreamChunk(token) {
@@ -264,12 +272,10 @@ export const useSolutionStore = defineStore('solution', () => {
   function setOCRText(val) { ocrText.value = val || '' }
 
   function deleteHistory(index) {
-    if (index < 0 || index >= history.value.length) return
-    history.value.splice(index, 1)
-    if (history.value.length === 0) activeHistoryIndex.value = 0
-    else if (index <= activeHistoryIndex.value) {
-      activeHistoryIndex.value = Math.max(0, activeHistoryIndex.value - 1)
-    }
+    // 单轮模式下删除即清空当前对话
+    const item = history.value[0]
+    if (item) item.rounds = []
+    activeHistoryIndex.value = 0
   }
 
   function scrollContentToBottom() {
@@ -317,7 +323,8 @@ export const useSolutionStore = defineStore('solution', () => {
   }
 
   async function exportImage(index) {
-    const item = history.value[index]
+    // 单轮模式：只导出当前对话
+    const item = history.value[0]
     if (!item) return
     const rounds = item.rounds || []
     if (rounds.length === 0) return

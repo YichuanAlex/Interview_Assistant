@@ -94,23 +94,17 @@ import { useUIStore } from '../stores/ui'
 import { useSettingsStore } from '../stores/settings'
 import Icon from './Icon.vue'
 import ThemeToggle from './ThemeToggle.vue'
-import { WindowMinimise, WindowMaximise, WindowUnmaximise, Quit } from '../../wailsjs/runtime/runtime'
+import { Quit } from '../../wailsjs/runtime/runtime'
+import { MinimiseWindow, ToggleMaximiseWindow } from '../../wailsjs/go/app/App'
 
 const ui = useUIStore()
 const settingsStore = useSettingsStore()
 
-const isMaximised = ref(false)
-
 function minimise() {
-  WindowMinimise()
+  MinimiseWindow()
 }
 function toggleMaximise() {
-  if (isMaximised.value) {
-    WindowUnmaximise()
-  } else {
-    WindowMaximise()
-  }
-  isMaximised.value = !isMaximised.value
+  ToggleMaximiseWindow()
 }
 function quit() {
   Quit()
@@ -227,14 +221,16 @@ function showSettingsTooltip() {
 .window-controls {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   margin-right: var(--sp-1);
   padding: 4px;
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
 }
 
 .win-btn {
-  width: 12px;
-  height: 12px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   border: none;
   display: flex;
@@ -245,16 +241,9 @@ function showSettingsTooltip() {
   opacity: 0.85;
   transition: all 0.15s ease;
   padding: 0;
-  position: relative;
   flex-shrink: 0;
-}
-
-/* 扩大点击热区 */
-.win-btn::after {
-  content: '';
-  position: absolute;
-  inset: -4px;
-  border-radius: 50%;
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
 }
 
 .win-btn:hover {

@@ -12,8 +12,6 @@ import { api } from '../services/api'
 
 const MIN_WIDTH = 840
 const MIN_HEIGHT = 700
-const MAX_WIDTH = 1024
-const MAX_HEIGHT = 768
 
 let startX = 0
 let startY = 0
@@ -36,8 +34,8 @@ async function startResize(e) {
 function onResize(e) {
   const deltaX = e.screenX - startX
   const deltaY = e.screenY - startY
-  const newWidth = Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, startWidth + deltaX))
-  const newHeight = Math.min(MAX_HEIGHT, Math.max(MIN_HEIGHT, startHeight + deltaY))
+  const newWidth = Math.max(MIN_WIDTH, startWidth + deltaX)
+  const newHeight = Math.max(MIN_HEIGHT, startHeight + deltaY)
   WindowSetSize(newWidth, newHeight)
 }
 

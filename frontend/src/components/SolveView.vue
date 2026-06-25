@@ -1,34 +1,6 @@
 <template>
   <div id="main-interface" class="main-interface" :class="{ visible: ui.mainVisible }">
-    <!-- Left Panel - History -->
-    <div class="left-panel" id="history-list" :class="{ collapsed: isHistoryCollapsed }">
-      <div class="panel-header">
-        <span v-if="!isHistoryCollapsed" class="panel-title">历史记录</span>
-        <button class="toggle-btn" @click="isHistoryCollapsed = !isHistoryCollapsed"
-          :title="isHistoryCollapsed ? '展开' : '收起'">
-          <Icon :name="isHistoryCollapsed ? 'panel-right' : 'panel-left'" :size="14" />
-        </button>
-      </div>
-      <div class="history-content" v-show="!isHistoryCollapsed">
-        <div v-if="solution.history.length === 0" class="history-empty">
-          <Icon name="file" :size="20" class="empty-icon" />
-          <span class="empty-text">暂无记录</span>
-        </div>
-        <HistoryItem v-for="(h, idx) in solution.history" :key="idx"
-          :summary="solution.getSummary(h)"
-          :time="h.time"
-          :isActive="idx === solution.activeHistoryIndex"
-          :isFirst="idx === 0"
-          :previewHtml="solution.renderMarkdown(solution.getSummary(h))"
-          :roundsCount="solution.getRoundsCount(h)"
-          @select="solution.selectHistory(idx)"
-          @delete="solution.deleteHistory(idx)"
-          @export-image="solution.exportImage(idx)" />
-      </div>
-    </div>
-
-    <!-- Right Panel - Content -->
-    <div class="right-panel">
+    <div class="solve-panel">
       <!-- Empty state -->
       <EmptyState v-if="solution.history.length === 0 && !solution.isLoading && !solution.errorState.show"
         :shortcut="settingsStore.solveShortcut" :sendShortcut="settingsStore.sendShortcut" />
@@ -125,7 +97,6 @@ import { useSolutionStore } from '../stores/solution'
 import { useSettingsStore } from '../stores/settings'
 import { useUIStore } from '../stores/ui'
 import Icon from './Icon.vue'
-import HistoryItem from './HistoryItem.vue'
 import EmptyState from './EmptyState.vue'
 import ErrorView from './ErrorView.vue'
 import LoadingView from './LoadingView.vue'
@@ -137,8 +108,6 @@ import OCRInputPanel from './OCRInputPanel.vue'
 const solution = useSolutionStore()
 const settingsStore = useSettingsStore()
 const ui = useUIStore()
-
-const isHistoryCollapsed = ref(false)
 
 // Check if there's any content in the current rounds
 const hasAnyContent = computed(() => {
@@ -168,80 +137,8 @@ const hasAnyContent = computed(() => {
   transform: translateY(0);
 }
 
-/* ---- Left Panel ---- */
-.left-panel {
-  width: 200px;
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  background: rgba(
-    var(--app-bg-r, 12),
-    var(--app-bg-g, 12),
-    var(--app-bg-b, 16),
-    var(--app-panel-a, 0.50)
-  );
-  backdrop-filter: blur(16px);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border-subtle);
-  overflow: hidden;
-  transition: width 0.25s var(--ease-out), opacity 0.25s ease, background-color var(--duration-base) ease;
-}
-.left-panel.collapsed {
-  width: 44px;
-}
-.panel-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--sp-3);
-  border-bottom: 1px solid var(--border-subtle);
-  flex-shrink: 0;
-}
-.panel-title {
-  font-size: var(--text-sm);
-  font-weight: var(--weight-bold);
-  color: var(--text-primary);
-  white-space: nowrap;
-}
-.toggle-btn {
-  width: 26px;
-  height: 26px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  border: none;
-  border-radius: var(--radius-sm);
-  color: var(--text-muted);
-  cursor: pointer;
-  transition: all var(--duration-fast) ease;
-}
-.toggle-btn:hover {
-  background: var(--surface-card-hover);
-  color: var(--text-primary);
-}
-.history-content {
-  flex: 1;
-  overflow-y: auto;
-  padding: var(--sp-2);
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-2);
-}
-.history-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: var(--sp-8) var(--sp-4);
-  color: var(--text-muted);
-  gap: var(--sp-2);
-}
-.empty-icon { opacity: 0.5; }
-.empty-text { font-size: var(--text-xs); }
-
-/* ---- Right Panel ---- */
-.right-panel {
+/* ---- Solve Panel ---- */
+.solve-panel {
   flex: 1;
   min-width: 0;
   display: flex;
