@@ -9,7 +9,7 @@
           <button class="win-btn minimise" @click="minimise" title="最小化">
             <Icon name="minus" :size="8" />
           </button>
-          <button class="win-btn maximise" @click="toggleFullscreen" title="全屏/还原">
+          <button class="win-btn maximise" @click="toggleMaximise" title="最大化/还原">
             <Icon name="maximize" :size="8" />
           </button>
         </div>
@@ -94,23 +94,23 @@ import { useUIStore } from '../stores/ui'
 import { useSettingsStore } from '../stores/settings'
 import Icon from './Icon.vue'
 import ThemeToggle from './ThemeToggle.vue'
-import { WindowMinimise, WindowFullscreen, WindowUnfullscreen, Quit } from '../../wailsjs/runtime/runtime'
+import { WindowMinimise, WindowMaximise, WindowUnmaximise, Quit } from '../../wailsjs/runtime/runtime'
 
 const ui = useUIStore()
 const settingsStore = useSettingsStore()
 
-const isFullscreen = ref(false)
+const isMaximised = ref(false)
 
 function minimise() {
   WindowMinimise()
 }
-function toggleFullscreen() {
-  if (isFullscreen.value) {
-    WindowUnfullscreen()
+function toggleMaximise() {
+  if (isMaximised.value) {
+    WindowUnmaximise()
   } else {
-    WindowFullscreen()
+    WindowMaximise()
   }
-  isFullscreen.value = !isFullscreen.value
+  isMaximised.value = !isMaximised.value
 }
 function quit() {
   Quit()

@@ -14,6 +14,7 @@ import (
 	"Interview_Assistant/pkg/task"
 	"Interview_Assistant/pkg/transcription"
 	"context"
+	"time"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
@@ -31,7 +32,7 @@ type App struct {
 	screenService        *screen.Service
 	ocrService           *ocr.Service
 	solver               *solution.Solver
-	transcriptionService *transcription.TranscriptionService
+	dualTranscription    *transcription.DualTranscription
 	coach                *interview.Coach
 }
 
@@ -66,8 +67,22 @@ func (a *App) Startup(ctx context.Context) {
 	a.llmService = llm.NewService(a.configManager.Get(), a.configManager)
 	a.solver = solution.NewSolver(a.llmService.GetProvider())
 	a.resumeService = resume.NewService(a.configManager.Get(), a.configManager)
-	a.transcriptionService = transcription.NewTranscriptionService(a.EmitEvent)
-	a.coach = interview.NewCoach(a.llmService.GetProvider())
+	a.dualTranscription = transcription.NewDualTranscription(a.EmitEvent)
+	a.coach = interview.NewCoach(a.llmService.GetProvider(), a.EmitEvent)
+
+	// 应用启动后自动开始双音源实时转录
+	go func() {
+		time.Sleep(2 * time.Second)
+		if a.dualTranscription == nil {
+			return
+		}
+		// 面试官：系统音频/会议软件（优先 OrayVirtualAudioDevice，备选 BlackHole）
+		// 面试者：麦克风（优先 MacBook Pro 麦克风）
+		err := a.dualTranscription.Start("OrayVirtualAudioDevice", "MacBook Pro", "./models/small", "zh")
+		if err != nil {
+			logger.Printf("自动启动双音源转录失败: %v\n", err)
+		}
+	}()
 
 	a.shortcutService = shortcut.NewService(a, a.configManager.Get().Shortcuts, func(callback func(map[string]shortcut.KeyBinding)) {
 		a.configManager.Subscribe(func(newConfig config.Config, oldConfig config.Config) {
@@ -87,8 +102,12 @@ func (a *App) Startup(ctx context.Context) {
 		if !ok || text == "" {
 			return
 		}
+		role := ""
+		if len(optionalData) >= 3 {
+			role, _ = optionalData[2].(string)
+		}
 		if a.coach != nil {
-			a.coach.AddTranscript(text)
+			a.coach.AddTranscript(text, role)
 		}
 	})
 
@@ -127,23 +146,23 @@ func (a *App) Show() {
 	runtime.WindowShow(a.ctx)
 }
 
-// StartTranscription 启动实时语音转录
-func (a *App) StartTranscription(device int, model string, language string) string {
-	if a.transcriptionService == nil {
+// StartTranscription 启动双音源实时语音转录
+func (a *App) StartTranscription(interviewerDeviceName string, intervieweeDeviceName string, model string, language string) string {
+	if a.dualTranscription == nil {
 		return "转录服务未初始化"
 	}
-	if err := a.transcriptionService.Start(device, model, language); err != nil {
+	if err := a.dualTranscription.Start(interviewerDeviceName, intervieweeDeviceName, model, language); err != nil {
 		return err.Error()
 	}
 	return ""
 }
 
-// StopTranscription 停止实时语音转录
+// StopTranscription 停止双音源实时语音转录
 func (a *App) StopTranscription() string {
-	if a.transcriptionService == nil {
+	if a.dualTranscription == nil {
 		return "转录服务未初始化"
 	}
-	if err := a.transcriptionService.Stop(); err != nil {
+	if err := a.dualTranscription.Stop(); err != nil {
 		return err.Error()
 	}
 	return ""
@@ -151,10 +170,10 @@ func (a *App) StopTranscription() string {
 
 // IsTranscribing 返回是否正在转录
 func (a *App) IsTranscribing() bool {
-	if a.transcriptionService == nil {
+	if a.dualTranscription == nil {
 		return false
 	}
-	return a.transcriptionService.IsRunning()
+	return a.dualTranscription.IsRunning()
 }
 
 // GenerateInterviewHint 根据当前转录上下文生成面试提示

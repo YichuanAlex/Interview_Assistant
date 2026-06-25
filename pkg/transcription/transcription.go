@@ -20,6 +20,7 @@ import (
 type Result struct {
 	Timestamp string `json:"timestamp"`
 	Text      string `json:"text"`
+	Role      string `json:"role"`
 }
 
 // TranscriptionService 管理 faster-whisper 子进程
@@ -28,15 +29,17 @@ type TranscriptionService struct {
 	cmd      *exec.Cmd
 	running  bool
 	emitFunc func(eventName string, data ...interface{})
+	role     string
 
 	scriptPath string
 	pythonPath string
 }
 
 // NewTranscriptionService 创建转录服务
-func NewTranscriptionService(emitFunc func(eventName string, data ...interface{})) *TranscriptionService {
+func NewTranscriptionService(emitFunc func(eventName string, data ...interface{}), role string) *TranscriptionService {
 	return &TranscriptionService{
 		emitFunc:   emitFunc,
+		role:       role,
 		pythonPath: findPython(),
 		scriptPath: findScript(),
 	}
@@ -50,7 +53,7 @@ func (s *TranscriptionService) IsRunning() bool {
 }
 
 // Start 启动实时转录
-func (s *TranscriptionService) Start(device int, model string, language string) error {
+func (s *TranscriptionService) Start(device int, deviceName string, model string, language string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -75,9 +78,16 @@ func (s *TranscriptionService) Start(device int, model string, language string) 
 	args := []string{
 		s.scriptPath,
 		"--model", model,
-		"--device", fmt.Sprintf("%d", device),
 		"--language", language,
 		"--json-output",
+	}
+	if deviceName != "" {
+		args = append(args, "--device-name", deviceName)
+	} else {
+		args = append(args, "--device", fmt.Sprintf("%d", device))
+	}
+	if s.role != "" {
+		args = append(args, "--role", s.role)
 	}
 
 	cmd := exec.Command(s.pythonPath, args...)
@@ -152,7 +162,7 @@ func (s *TranscriptionService) readStdout(stdout io.ReadCloser) {
 		var res Result
 		if err := json.Unmarshal([]byte(line), &res); err == nil && res.Text != "" {
 			if s.emitFunc != nil {
-				s.emitFunc("transcription", res.Timestamp, res.Text)
+				s.emitFunc("transcription", res.Timestamp, res.Text, res.Role)
 			}
 		} else {
 			logger.Printf("转录输出: %s\n", line)

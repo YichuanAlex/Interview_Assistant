@@ -84,7 +84,7 @@ export const api = {
 
   saveImageToFile: (b64) => SaveImageToFile(b64),
 
-  startTranscription: (device, model, language) => StartTranscription(device, model, language),
+  startTranscription: (interviewerDeviceName, intervieweeDeviceName, model, language) => StartTranscription(interviewerDeviceName, intervieweeDeviceName, model, language),
   stopTranscription: () => StopTranscription(),
   isTranscribing: () => IsTranscribing(),
   generateInterviewHint: () => GenerateInterviewHint(),

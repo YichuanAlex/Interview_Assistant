@@ -96,13 +96,17 @@ def transcribe_chunk(model: WhisperModel, audio: np.ndarray, language: str):
     return texts, elapsed
 
 
-def emit_result(text: str, json_output: bool = False):
+def emit_result(text: str, json_output: bool = False, role: str = ""):
     """输出识别结果。json_output 为 True 时输出 JSON 行，便于 Go 解析。"""
     if json_output:
         import json
-        print(json.dumps({"timestamp": time.strftime("%H:%M:%S"), "text": text}, ensure_ascii=False), flush=True)
+        payload = {"timestamp": time.strftime("%H:%M:%S"), "text": text}
+        if role:
+            payload["role"] = role
+        print(json.dumps(payload, ensure_ascii=False), flush=True)
     else:
-        print(f"[{time.strftime('%H:%M:%S')}] {text}")
+        prefix = f"[{role}] " if role else ""
+        print(f"[{time.strftime('%H:%M:%S')}] {prefix}{text}")
         sys.stdout.flush()
 
 
@@ -125,6 +129,7 @@ class RealtimeTranscriber:
         language: str,
         max_buffer_seconds: int = MAX_BUFFER_SECONDS,
         json_output: bool = False,
+        role: str = "",
     ):
         self.model = model
         self.input_device = input_device
@@ -136,6 +141,7 @@ class RealtimeTranscriber:
         self.vad_options = create_vad_options()
         self.last_text = ""
         self.json_output = json_output
+        self.role = role
 
     def audio_callback(self, indata, frames, time_info, status):
         if status:
@@ -195,7 +201,7 @@ class RealtimeTranscriber:
                 if texts:
                     line = " ".join(texts)
                     if line != self.last_text:
-                        emit_result(line, self.json_output)
+                        emit_result(line, self.json_output, self.role)
                         self.last_text = line
                 logging.debug(
                     "片段 %.2fs-%.2fs 转录耗时 %.2fs",
@@ -256,6 +262,12 @@ def parse_args():
         help="音频输入设备编号（默认自动选择 MacBook Pro 麦克风）",
     )
     parser.add_argument(
+        "--device-name",
+        type=str,
+        default=None,
+        help="按名称匹配音频输入设备（优先于 --device）",
+    )
+    parser.add_argument(
         "--language",
         type=str,
         default="zh",
@@ -283,7 +295,22 @@ def parse_args():
         action="store_true",
         help="以 JSON 行格式输出识别结果，便于被其他程序解析",
     )
+    parser.add_argument(
+        "--role",
+        type=str,
+        default="",
+        help="标识该音频流的角色，例如 interviewer 或 interviewee",
+    )
     return parser.parse_args()
+
+
+def select_input_device_by_name(device_name: str):
+    devices = sd.query_devices()
+    target = device_name.lower()
+    for i, dev in enumerate(devices):
+        if dev["max_input_channels"] > 0 and target in dev["name"].lower():
+            return i
+    return None
 
 
 def select_default_input_device():
@@ -307,7 +334,15 @@ def main():
         return
 
     input_device = args.device
-    if input_device is None:
+    if args.device_name:
+        matched = select_input_device_by_name(args.device_name)
+        if matched is not None:
+            input_device = matched
+            print(f"按名称匹配输入设备: {input_device} - {devices[input_device]['name']}")
+        else:
+            print(f"未找到名称包含 '{args.device_name}' 的设备，改用默认麦克风")
+            input_device = select_default_input_device()
+    elif input_device is None:
         input_device = select_default_input_device()
         print(f"自动选择输入设备: {input_device} - {devices[input_device]['name']}")
     else:
@@ -324,6 +359,7 @@ def main():
         input_device=input_device,
         language=language,
         json_output=args.json_output,
+        role=args.role,
     )
     transcriber.run()
 

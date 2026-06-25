@@ -76,7 +76,7 @@ export function Show():Promise<void>;
 
 export function StartRecordingKey(arg1:string):Promise<void>;
 
-export function StartTranscription(arg1:number,arg2:string,arg3:string):Promise<string>;
+export function StartTranscription(arg1:string,arg2:string,arg3:string,arg4:string):Promise<string>;
 
 export function StopRecordingKey():Promise<void>;
 

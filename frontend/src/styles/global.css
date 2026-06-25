@@ -49,6 +49,16 @@ body {
               border-color var(--duration-base) ease;
 }
 
+/* 确保所有交互元素可以接收点击事件 */
+#app button,
+#app a,
+#app input,
+#app textarea,
+#app select,
+#app [role="button"] {
+  pointer-events: auto;
+}
+
 /* ========================================
    Scrollbar
    ======================================== */

@@ -21,8 +21,8 @@ export const useInterviewStore = defineStore('interview', () => {
     return transcripts.value.map(t => `[${t.timestamp}] ${t.text}`).join('\n')
   })
 
-  function addTranscript(timestamp, text) {
-    transcripts.value.push({ timestamp, text })
+  function addTranscript(timestamp, text, role = '') {
+    transcripts.value.push({ timestamp, text, role })
     // 保留最近 100 条
     if (transcripts.value.length > 100) {
       transcripts.value = transcripts.value.slice(-100)

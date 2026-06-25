@@ -10,12 +10,8 @@
           <Icon :name="interview.isTranscribing ? 'mic-off' : 'mic'" :size="16" />
           <span>{{ interview.isTranscribing ? '停止转录' : '开始转录' }}</span>
         </button>
-        <select v-model="selectedDevice" class="device-select" title="选择音频输入设备">
-          <option :value="-1">默认麦克风</option>
-          <option v-for="dev in interview.audioDevices" :key="dev.id" :value="dev.id">
-            {{ dev.name }}
-          </option>
-        </select>
+        <span v-if="interview.isTranscribing" class="status-badge live">转录中</span>
+        <span v-else class="status-badge stopped">已停止</span>
       </div>
       <div class="toolbar-right">
         <button class="btn btn-accent" :disabled="interview.isGeneratingHint" @click="generateHint">
@@ -47,8 +43,9 @@
             v-for="(t, i) in interview.transcripts"
             :key="i"
             class="transcript-item"
-            :class="{ latest: i === interview.transcripts.length - 1 }"
+            :class="{ latest: i === interview.transcripts.length - 1, interviewer: t.role === 'interviewer', interviewee: t.role === 'interviewee' }"
           >
+            <span class="transcript-role">{{ t.role === 'interviewee' ? '我' : '面试官' }}</span>
             <span class="transcript-time">{{ t.timestamp }}</span>
             <span class="transcript-text">{{ t.text }}</span>
           </div>
@@ -85,7 +82,6 @@ import Icon from './Icon.vue'
 const interview = useInterviewStore()
 const ui = useUIStore()
 const transcriptBox = ref(null)
-const selectedDevice = ref(-1)
 
 watch(() => interview.transcripts.length, () => {
   nextTick(() => {
@@ -97,8 +93,13 @@ watch(() => interview.transcripts.length, () => {
 
 onMounted(() => {
   // 监听转录文本
-  on('transcription', (timestamp, text) => {
-    interview.addTranscript(timestamp, text)
+  on('transcription', (timestamp, text, role) => {
+    interview.addTranscript(timestamp, text, role)
+  })
+
+  // 监听自动生成的面试提示
+  on('interview-hint', (hint) => {
+    interview.setHint(hint || '')
   })
 
   // 监听转录状态
@@ -116,8 +117,6 @@ onMounted(() => {
       ui.showToast('转录出错', 'error', 2000)
     }
   })
-
-  // 默认启动时列出设备（后端暂无设备列表接口，先留空）
 })
 
 async function toggleTranscription() {
@@ -127,8 +126,8 @@ async function toggleTranscription() {
       ui.showToast(err, 'error', 2000)
     }
   } else {
-    // 默认使用 small 模型，启动更快；模型路径相对于脚本所在目录
-    const err = await api.startTranscription(selectedDevice.value, './models/small', 'zh')
+    // 面试官：系统音频/会议软件；面试者：MacBook Pro 麦克风
+    const err = await api.startTranscription('OrayVirtualAudioDevice', 'MacBook Pro', './models/small', 'zh')
     if (err) {
       interview.setStatusMessage('启动失败: ' + err)
       ui.showToast('启动转录失败', 'error', 3000)
@@ -164,6 +163,12 @@ async function clearContext() {
   flex-direction: column;
   height: 100%;
   overflow: hidden;
+  pointer-events: auto;
+}
+
+.interview-view button,
+.interview-view select {
+  pointer-events: auto;
 }
 
 .interview-toolbar {
@@ -183,14 +188,21 @@ async function clearContext() {
   gap: var(--sp-3);
 }
 
-.device-select {
-  background: var(--surface-card);
-  color: var(--text-primary);
-  border: 1px solid var(--border-subtle);
+.status-badge {
+  font-size: var(--text-xs);
+  padding: var(--sp-1) var(--sp-2);
   border-radius: var(--radius-md);
-  padding: var(--sp-2) var(--sp-3);
-  font-size: var(--text-sm);
-  min-width: 160px;
+  font-weight: 500;
+}
+
+.status-badge.live {
+  background: rgba(40, 200, 64, 0.15);
+  color: #28c840;
+}
+
+.status-badge.stopped {
+  background: var(--surface-hover);
+  color: var(--text-muted);
 }
 
 .interview-status {
@@ -250,6 +262,26 @@ async function clearContext() {
 
 .transcript-item.latest {
   color: var(--text-primary);
+}
+
+.transcript-role {
+  flex-shrink: 0;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-hover);
+  color: var(--text-muted);
+}
+
+.transcript-item.interviewer .transcript-role {
+  background: rgba(254, 188, 46, 0.15);
+  color: #febc2e;
+}
+
+.transcript-item.interviewee .transcript-role {
+  background: rgba(0, 122, 255, 0.15);
+  color: #007aff;
 }
 
 .transcript-time {
