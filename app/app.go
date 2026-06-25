@@ -76,9 +76,9 @@ func (a *App) Startup(ctx context.Context) {
 		if a.dualTranscription == nil {
 			return
 		}
-		// 面试官：系统音频/会议软件（优先 OrayVirtualAudioDevice，备选 BlackHole）
+		// 面试官：系统音频/会议软件（优先 BlackHole 2ch，备选 OrayVirtualAudioDevice）
 		// 面试者：麦克风（优先 MacBook Pro 麦克风）
-		err := a.dualTranscription.Start("OrayVirtualAudioDevice", "MacBook Pro", "./models/small", "zh")
+		err := a.dualTranscription.Start("BlackHole 2ch", "MacBook Pro", "./models/small", "zh")
 		if err != nil {
 			logger.Printf("自动启动双音源转录失败: %v\n", err)
 		}

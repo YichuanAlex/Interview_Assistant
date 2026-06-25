@@ -324,6 +324,16 @@ def select_default_input_device():
     return sd.default.device[0]
 
 
+def list_input_devices():
+    """返回所有可用输入设备列表，用于日志和调试。"""
+    devices = sd.query_devices()
+    inputs = []
+    for i, dev in enumerate(devices):
+        if dev["max_input_channels"] > 0:
+            inputs.append((i, dev["name"]))
+    return inputs
+
+
 def main():
     args = parse_args()
     setup_logging(args.debug)
@@ -333,6 +343,13 @@ def main():
     if args.list_devices:
         return
 
+    # 打印可用输入设备，方便排查
+    print("可用输入设备列表:")
+    for idx, name in list_input_devices():
+        marker = " *" if idx == sd.default.device[0] else ""
+        print(f"  [{idx}] {name}{marker}")
+    print()
+
     input_device = args.device
     if args.device_name:
         matched = select_input_device_by_name(args.device_name)
@@ -340,6 +357,11 @@ def main():
             input_device = matched
             print(f"按名称匹配输入设备: {input_device} - {devices[input_device]['name']}")
         else:
+            if args.role == "interviewer":
+                # 面试官音源必须是指定的系统音频虚拟设备，不能回退到麦克风
+                print(f"错误：未找到面试官音源设备 '{args.device_name}'，无法录制系统音频。")
+                print("请安装 BlackHole 2ch 并设置为系统输出，或检查设备名称。")
+                sys.exit(1)
             print(f"未找到名称包含 '{args.device_name}' 的设备，改用默认麦克风")
             input_device = select_default_input_device()
     elif input_device is None:
