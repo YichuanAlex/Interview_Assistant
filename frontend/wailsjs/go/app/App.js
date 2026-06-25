@@ -14,6 +14,10 @@ export function CheckScreenCapturePermission() {
   return window['go']['app']['App']['CheckScreenCapturePermission']();
 }
 
+export function ClearInterviewContext() {
+  return window['go']['app']['App']['ClearInterviewContext']();
+}
+
 export function ClearResume() {
   return window['go']['app']['App']['ClearResume']();
 }
@@ -28,6 +32,10 @@ export function CopyCode() {
 
 export function EmitEvent(arg1, arg2) {
   return window['go']['app']['App']['EmitEvent'](arg1, arg2);
+}
+
+export function GenerateInterviewHint() {
+  return window['go']['app']['App']['GenerateInterviewHint']();
 }
 
 export function GetDomainCategories() {
@@ -60,6 +68,10 @@ export function GetSettings() {
 
 export function IsInterruptThinkingEnabled() {
   return window['go']['app']['App']['IsInterruptThinkingEnabled']();
+}
+
+export function IsTranscribing() {
+  return window['go']['app']['App']['IsTranscribing']();
 }
 
 export function MoveWindow(arg1, arg2) {
@@ -134,8 +146,16 @@ export function StartRecordingKey(arg1) {
   return window['go']['app']['App']['StartRecordingKey'](arg1);
 }
 
+export function StartTranscription(arg1, arg2, arg3) {
+  return window['go']['app']['App']['StartTranscription'](arg1, arg2, arg3);
+}
+
 export function StopRecordingKey() {
   return window['go']['app']['App']['StopRecordingKey']();
+}
+
+export function StopTranscription() {
+  return window['go']['app']['App']['StopTranscription']();
 }
 
 export function TestConnection(arg1, arg2) {

@@ -10,6 +10,8 @@ export function CheckMicrophoneAccess():Promise<number>;
 
 export function CheckScreenCapturePermission():Promise<boolean>;
 
+export function ClearInterviewContext():Promise<string>;
+
 export function ClearResume():Promise<void>;
 
 export function ClearScreenshots():Promise<void>;
@@ -17,6 +19,8 @@ export function ClearScreenshots():Promise<void>;
 export function CopyCode():Promise<void>;
 
 export function EmitEvent(arg1:string,arg2:Array<any>):Promise<void>;
+
+export function GenerateInterviewHint():Promise<string>;
 
 export function GetDomainCategories():Promise<Array<domain.Category>>;
 
@@ -33,6 +37,8 @@ export function GetScreenshotPreview(arg1:number,arg2:number,arg3:boolean,arg4:b
 export function GetSettings():Promise<config.Config>;
 
 export function IsInterruptThinkingEnabled():Promise<boolean>;
+
+export function IsTranscribing():Promise<boolean>;
 
 export function MoveWindow(arg1:number,arg2:number):Promise<void>;
 
@@ -70,7 +76,11 @@ export function Show():Promise<void>;
 
 export function StartRecordingKey(arg1:string):Promise<void>;
 
+export function StartTranscription(arg1:number,arg2:string,arg3:string):Promise<string>;
+
 export function StopRecordingKey():Promise<void>;
+
+export function StopTranscription():Promise<string>;
 
 export function TestConnection(arg1:string,arg2:string):Promise<string>;
 

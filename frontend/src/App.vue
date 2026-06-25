@@ -1,8 +1,30 @@
 <template>
   <TopBar @openSettings="settingsStore.openSettings" />
 
-  <WelcomeView v-if="!ui.hasStarted && solution.history.length === 0" />
-  <SolveView v-else />
+  <nav class="module-tabs">
+    <button
+      class="module-tab"
+      :class="{ active: activeModule === 'interview' }"
+      @click="activeModule = 'interview'"
+    >
+      <Icon name="users" :size="16" />
+      <span>面试提词</span>
+    </button>
+    <button
+      class="module-tab"
+      :class="{ active: activeModule === 'coding' }"
+      @click="activeModule = 'coding'"
+    >
+      <Icon name="code" :size="16" />
+      <span>算法题解题</span>
+    </button>
+  </nav>
+
+  <InterviewView v-if="activeModule === 'interview'" class="module-content" />
+  <div v-else class="module-content coding-module">
+    <WelcomeView v-if="!ui.hasStarted && solution.history.length === 0" />
+    <SolveView v-else />
+  </div>
 
   <ScreenshotDock />
   <SettingsModal />
@@ -38,10 +60,11 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import TopBar from './components/TopBar.vue'
 import WelcomeView from './components/WelcomeView.vue'
 import SolveView from './components/SolveView.vue'
+import InterviewView from './components/InterviewView.vue'
 import ScreenshotDock from './components/ScreenshotDock.vue'
 import SettingsModal from './components/SettingsModal.vue'
 import ResizeHandle from './components/ResizeHandle.vue'
@@ -57,6 +80,8 @@ import { initCodeBlockInteractions } from './utils/markdown-latex'
 const ui = useUIStore()
 const settingsStore = useSettingsStore()
 const solution = useSolutionStore()
+
+const activeModule = ref('interview')
 
 let pendingSolveCallback = null
   let lastIsFollowUp = false
@@ -372,6 +397,54 @@ onMounted(() => {
 .overlay-fade-leave-to { opacity: 0; }
 .overlay-fade-enter-from .warn-dialog,
 .overlay-fade-leave-to .warn-dialog { transform: scale(0.95) translateY(8px); }
+
+.module-tabs {
+  display: flex;
+  gap: var(--sp-1);
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--surface-base);
+  flex-shrink: 0;
+}
+
+.module-content {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.coding-module > * {
+  flex: 1;
+  min-height: 0;
+}
+
+.module-tab {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.module-tab:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+.module-tab.active {
+  background: var(--surface-card);
+  border-color: var(--border-subtle);
+  color: var(--text-primary);
+}
 
 .disclaimer {
   text-align: center;

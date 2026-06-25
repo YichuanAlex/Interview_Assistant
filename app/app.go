@@ -6,11 +6,13 @@ import (
 	"Interview_Assistant/pkg/logger"
 	"Interview_Assistant/pkg/ocr"
 	"Interview_Assistant/pkg/resume"
+	"Interview_Assistant/pkg/interview"
 	"Interview_Assistant/pkg/screen"
 	"Interview_Assistant/pkg/shortcut"
 	"Interview_Assistant/pkg/solution"
 	"Interview_Assistant/pkg/state"
 	"Interview_Assistant/pkg/task"
+	"Interview_Assistant/pkg/transcription"
 	"context"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
@@ -23,12 +25,14 @@ type App struct {
 	stateManager  *state.StateManager
 	taskManager   *task.TaskCoordinator
 
-	llmService      *llm.Service
-	resumeService   *resume.Service
-	shortcutService *shortcut.Service
-	screenService   *screen.Service
-	ocrService      *ocr.Service
-	solver          *solution.Solver
+	llmService           *llm.Service
+	resumeService        *resume.Service
+	shortcutService      *shortcut.Service
+	screenService        *screen.Service
+	ocrService           *ocr.Service
+	solver               *solution.Solver
+	transcriptionService *transcription.TranscriptionService
+	coach                *interview.Coach
 }
 
 func NewApp() *App {
@@ -62,6 +66,8 @@ func (a *App) Startup(ctx context.Context) {
 	a.llmService = llm.NewService(a.configManager.Get(), a.configManager)
 	a.solver = solution.NewSolver(a.llmService.GetProvider())
 	a.resumeService = resume.NewService(a.configManager.Get(), a.configManager)
+	a.transcriptionService = transcription.NewTranscriptionService(a.EmitEvent)
+	a.coach = interview.NewCoach(a.llmService.GetProvider())
 
 	a.shortcutService = shortcut.NewService(a, a.configManager.Get().Shortcuts, func(callback func(map[string]shortcut.KeyBinding)) {
 		a.configManager.Subscribe(func(newConfig config.Config, oldConfig config.Config) {
@@ -71,12 +77,30 @@ func (a *App) Startup(ctx context.Context) {
 	a.shortcutService.Start()
 
 	a.configManager.Subscribe(a.onConfigChanged)
+
+	// 监听实时转录文本，添加到面试提示上下文
+	runtime.EventsOn(ctx, "transcription", func(optionalData ...interface{}) {
+		if len(optionalData) < 2 {
+			return
+		}
+		text, ok := optionalData[1].(string)
+		if !ok || text == "" {
+			return
+		}
+		if a.coach != nil {
+			a.coach.AddTranscript(text)
+		}
+	})
+
 	a.stateManager.UpdateInitStatus(state.StatusReady)
 }
 
 func (a *App) onConfigChanged(newConfig config.Config, oldConfig config.Config) {
 	if a.solver != nil {
 		a.solver.SetProvider(a.llmService.GetProvider())
+	}
+	if a.coach != nil {
+		a.coach.SetProvider(a.llmService.GetProvider())
 	}
 
 	if !newConfig.KeepContext && a.solver != nil {
@@ -101,4 +125,55 @@ func (a *App) EmitEvent(eventName string, data ...interface{}) {
 
 func (a *App) Show() {
 	runtime.WindowShow(a.ctx)
+}
+
+// StartTranscription 启动实时语音转录
+func (a *App) StartTranscription(device int, model string, language string) string {
+	if a.transcriptionService == nil {
+		return "转录服务未初始化"
+	}
+	if err := a.transcriptionService.Start(device, model, language); err != nil {
+		return err.Error()
+	}
+	return ""
+}
+
+// StopTranscription 停止实时语音转录
+func (a *App) StopTranscription() string {
+	if a.transcriptionService == nil {
+		return "转录服务未初始化"
+	}
+	if err := a.transcriptionService.Stop(); err != nil {
+		return err.Error()
+	}
+	return ""
+}
+
+// IsTranscribing 返回是否正在转录
+func (a *App) IsTranscribing() bool {
+	if a.transcriptionService == nil {
+		return false
+	}
+	return a.transcriptionService.IsRunning()
+}
+
+// GenerateInterviewHint 根据当前转录上下文生成面试提示
+func (a *App) GenerateInterviewHint() string {
+	if a.coach == nil {
+		return "面试提示服务未初始化"
+	}
+	hint, err := a.coach.GenerateHint(context.Background())
+	if err != nil {
+		return "生成提示失败: " + err.Error()
+	}
+	return hint
+}
+
+// ClearInterviewContext 清空面试提词上下文
+func (a *App) ClearInterviewContext() string {
+	if a.coach == nil {
+		return "面试提示服务未初始化"
+	}
+	a.coach.ClearHistory()
+	return ""
 }

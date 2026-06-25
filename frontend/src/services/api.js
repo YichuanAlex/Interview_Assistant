@@ -1,13 +1,16 @@
 import {
   CancelRunningTask,
   CheckScreenCapturePermission,
+  ClearInterviewContext,
   ClearResume,
+  GenerateInterviewHint,
   GetDomainCategories,
   GetInitStatus,
   GetModels,
   GetOCRText,
   GetScreenshotPreview,
   GetSettings,
+  IsTranscribing,
   MoveWindow,
   OpenScreenCaptureSettings,
   ParseResume,
@@ -21,7 +24,9 @@ import {
   SetOCRText,
   SetWindowAlwaysOnTop,
   StartRecordingKey,
+  StartTranscription,
   StopRecordingKey,
+  StopTranscription,
   TestConnection,
   ToggleClickThrough,
   ToggleVisibility,
@@ -78,4 +83,10 @@ export const api = {
   openScreenCaptureSettings: () => OpenScreenCaptureSettings(),
 
   saveImageToFile: (b64) => SaveImageToFile(b64),
+
+  startTranscription: (device, model, language) => StartTranscription(device, model, language),
+  stopTranscription: () => StopTranscription(),
+  isTranscribing: () => IsTranscribing(),
+  generateInterviewHint: () => GenerateInterviewHint(),
+  clearInterviewContext: () => ClearInterviewContext(),
 }

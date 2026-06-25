@@ -47,6 +47,15 @@
       <line x1="8" y1="23" x2="16" y2="23" />
     </template>
 
+    <!-- Mic Off -->
+    <template v-else-if="name === 'mic-off'">
+      <line x1="1" y1="1" x2="23" y2="23" />
+      <path d="M9 9v1a3 3 0 0 0 3 3 3 3 0 0 0 3-3V5a3 3 0 0 0-3-3 3 3 0 0 0-3 3v4" />
+      <path d="M19 10v2a7 7 0 0 1-10.88 5.85" />
+      <line x1="12" y1="19" x2="12" y2="23" />
+      <line x1="8" y1="23" x2="16" y2="23" />
+    </template>
+
     <!-- Speaker / Volume (system audio) -->
     <template v-else-if="name === 'speaker'">
       <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
@@ -113,6 +122,28 @@
       <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
       <line x1="10" y1="11" x2="10" y2="17" />
       <line x1="14" y1="11" x2="14" y2="17" />
+    </template>
+
+    <!-- Trash 2 -->
+    <template v-else-if="name === 'trash-2'">
+      <polyline points="3 6 5 6 21 6" />
+      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+      <line x1="10" y1="11" x2="10" y2="17" />
+      <line x1="14" y1="11" x2="14" y2="17" />
+      <line x1="9" y1="4" x2="15" y2="4" />
+    </template>
+
+    <!-- Message Square -->
+    <template v-else-if="name === 'message-square'">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+    </template>
+
+    <!-- Users -->
+    <template v-else-if="name === 'users'">
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
     </template>
 
     <!-- Image / Export -->
