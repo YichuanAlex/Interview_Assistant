@@ -368,7 +368,8 @@
     "context_length": 1000000,
     "inputs": [
       "text",
-      "image"
+      "image",
+      "file"
     ],
     "outputs": [
       "text"
@@ -4119,10 +4120,10 @@
       "text"
     ]
   },
-  "command-r-plus-08-2024": {
+  "command-r-08-2024": {
     "provider": "cohere",
-    "name": "Cohere: Command R+ (08-2024)",
-    "description": "command-r-plus-08-2024 is an update of the [Command R+](/models/cohere/command-r-plus) with roughly 50% higher throughput and 25% lower latencies as compared to the previous Command R+ version, while keeping the hardware footprint...",
+    "name": "Cohere: Command R (08-2024)",
+    "description": "command-r-08-2024 is an update of the [Command R](/models/cohere/command-r) with improved performance for multilingual retrieval-augmented generation (RAG) and tool use. More broadly, it is better at math, code and reasoning and...",
     "supports_image": false,
     "context_length": 128000,
     "inputs": [
@@ -4132,10 +4133,10 @@
       "text"
     ]
   },
-  "command-r-08-2024": {
+  "command-r-plus-08-2024": {
     "provider": "cohere",
-    "name": "Cohere: Command R (08-2024)",
-    "description": "command-r-08-2024 is an update of the [Command R](/models/cohere/command-r) with improved performance for multilingual retrieval-augmented generation (RAG) and tool use. More broadly, it is better at math, code and reasoning and...",
+    "name": "Cohere: Command R+ (08-2024)",
+    "description": "command-r-plus-08-2024 is an update of the [Command R+](/models/cohere/command-r-plus) with roughly 50% higher throughput and 25% lower latencies as compared to the previous Command R+ version, while keeping the hardware footprint...",
     "supports_image": false,
     "context_length": 128000,
     "inputs": [
@@ -4251,9 +4252,9 @@
       "text"
     ]
   },
-  "gpt-4o-mini-2024-07-18": {
+  "gpt-4o-mini": {
     "provider": "openai",
-    "name": "OpenAI: GPT-4o-mini (2024-07-18)",
+    "name": "OpenAI: GPT-4o-mini",
     "description": "GPT-4o mini is OpenAI's newest model after [GPT-4 Omni](/models/openai/gpt-4o), supporting both text and image inputs with text outputs. As their most advanced small model, it is many multiples more affordable...",
     "supports_image": true,
     "context_length": 128000,
@@ -4266,9 +4267,9 @@
       "text"
     ]
   },
-  "gpt-4o-mini": {
+  "gpt-4o-mini-2024-07-18": {
     "provider": "openai",
-    "name": "OpenAI: GPT-4o-mini",
+    "name": "OpenAI: GPT-4o-mini (2024-07-18)",
     "description": "GPT-4o mini is OpenAI's newest model after [GPT-4 Omni](/models/openai/gpt-4o), supporting both text and image inputs with text outputs. As their most advanced small model, it is many multiples more affordable...",
     "supports_image": true,
     "context_length": 128000,
@@ -4515,12 +4516,12 @@
       "text"
     ]
   },
-  "gpt-4": {
+  "gpt-3.5-turbo": {
     "provider": "openai",
-    "name": "OpenAI: GPT-4",
-    "description": "OpenAI's flagship model, GPT-4 is a large-scale multimodal language model capable of solving difficult problems with greater accuracy than previous models due to its broader general knowledge and advanced reasoning...",
+    "name": "OpenAI: GPT-3.5 Turbo",
+    "description": "GPT-3.5 Turbo is OpenAI's fastest model. It can understand and generate natural language or code, and is optimized for chat and traditional completion tasks.\n\nTraining data up to Sep 2021.",
     "supports_image": false,
-    "context_length": 8191,
+    "context_length": 16385,
     "inputs": [
       "text"
     ],
@@ -4528,12 +4529,12 @@
       "text"
     ]
   },
-  "gpt-3.5-turbo": {
+  "gpt-4": {
     "provider": "openai",
-    "name": "OpenAI: GPT-3.5 Turbo",
-    "description": "GPT-3.5 Turbo is OpenAI's fastest model. It can understand and generate natural language or code, and is optimized for chat and traditional completion tasks.\n\nTraining data up to Sep 2021.",
+    "name": "OpenAI: GPT-4",
+    "description": "OpenAI's flagship model, GPT-4 is a large-scale multimodal language model capable of solving difficult problems with greater accuracy than previous models due to its broader general knowledge and advanced reasoning...",
     "supports_image": false,
-    "context_length": 16385,
+    "context_length": 8191,
     "inputs": [
       "text"
     ],
