@@ -2,11 +2,12 @@ package app
 
 import (
 	"Interview_Assistant/pkg/config"
+	"Interview_Assistant/pkg/interview"
+	"Interview_Assistant/pkg/knowledge"
 	"Interview_Assistant/pkg/llm"
 	"Interview_Assistant/pkg/logger"
 	"Interview_Assistant/pkg/ocr"
 	"Interview_Assistant/pkg/resume"
-	"Interview_Assistant/pkg/interview"
 	"Interview_Assistant/pkg/screen"
 	"Interview_Assistant/pkg/shortcut"
 	"Interview_Assistant/pkg/solution"
@@ -26,14 +27,15 @@ type App struct {
 	stateManager  *state.StateManager
 	taskManager   *task.TaskCoordinator
 
-	llmService           *llm.Service
-	resumeService        *resume.Service
-	shortcutService      *shortcut.Service
-	screenService        *screen.Service
-	ocrService           *ocr.Service
-	solver               *solution.Solver
-	dualTranscription    *transcription.DualTranscription
-	coach                *interview.Coach
+	llmService        *llm.Service
+	resumeService     *resume.Service
+	shortcutService   *shortcut.Service
+	screenService     *screen.Service
+	ocrService        *ocr.Service
+	solver            *solution.Solver
+	dualTranscription *transcription.DualTranscription
+	coach             *interview.Coach
+	knowledgeService  *knowledge.Service
 }
 
 func NewApp() *App {
@@ -68,7 +70,8 @@ func (a *App) Startup(ctx context.Context) {
 	a.solver = solution.NewSolver(a.llmService.GetProvider())
 	a.resumeService = resume.NewService(a.configManager.Get(), a.configManager)
 	a.dualTranscription = transcription.NewDualTranscription(a.EmitEvent)
-	a.coach = interview.NewCoach(a.llmService.GetProvider(), a.EmitEvent)
+	a.knowledgeService = knowledge.NewService([]string{"material/mine", "material/preparation"})
+	a.coach = interview.NewCoach(a.llmService.GetProvider(), a.EmitEvent, a.knowledgeService)
 
 	// 应用启动后自动开始双音源实时转录
 	go func() {
@@ -76,9 +79,8 @@ func (a *App) Startup(ctx context.Context) {
 		if a.dualTranscription == nil {
 			return
 		}
-		// 面试官：系统音频/会议软件（优先 BlackHole 2ch，备选 OrayVirtualAudioDevice）
-		// 面试者：麦克风（优先 MacBook Pro 麦克风）
-		err := a.dualTranscription.Start("BlackHole 2ch", "MacBook Pro", "./models/small", "zh")
+		// 自动绑定：面试官使用系统音频，面试者使用系统默认输入设备
+		err := a.dualTranscription.Start("", "", "./models/large-v3-turbo", "zh")
 		if err != nil {
 			logger.Printf("自动启动双音源转录失败: %v\n", err)
 		}
@@ -132,6 +134,9 @@ func (a *App) onConfigChanged(newConfig config.Config, oldConfig config.Config) 
 func (a *App) OnShutdown(ctx context.Context) {
 	if a.shortcutService != nil {
 		a.shortcutService.Stop()
+	}
+	if a.dualTranscription != nil {
+		_ = a.dualTranscription.Stop()
 	}
 	if err := a.configManager.Save(); err != nil {
 		logger.Printf("保存配置失败: %v", err)

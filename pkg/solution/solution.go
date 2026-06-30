@@ -2,12 +2,12 @@ package solution
 
 import (
 	"Interview_Assistant/pkg/config"
-	"Interview_Assistant/pkg/domain"
 	"Interview_Assistant/pkg/llm"
 	"Interview_Assistant/pkg/logger"
-	"bytes"
 	"context"
 	"errors"
+	"fmt"
+	"strings"
 )
 
 // MaxConversationRounds is the maximum number of conversation rounds to keep.
@@ -20,6 +20,7 @@ type Callbacks struct {
 type Request struct {
 	Config      config.Config
 	Screenshots []string
+	UserText    string
 	OCRText     string
 	UseTextMode bool
 	IsFollowUp  bool
@@ -53,57 +54,15 @@ func (s *Solver) Solve(ctx context.Context, req Request, cb Callbacks) bool {
 		return false
 	}
 
-	logger.Println("开始解题流程")
+	logger.Println("开始 AI 对话流程")
 
-	var systemPrompt bytes.Buffer
-	systemPrompt.WriteString(domain.GetSystemBehaviorPrompt())
-
-	if req.Config.DomainId != "" {
-		if prompt := domain.GetPrompt(req.Config.DomainId); prompt != "" {
-			systemPrompt.WriteString("\n\n<ScenePrompt>\n")
-			systemPrompt.WriteString(prompt)
-			systemPrompt.WriteString("\n</ScenePrompt>")
-			logger.Printf("已注入场景提示词 (DomainID: %s)", req.Config.DomainId)
+	currentUserMsg, err := buildUserMessage(req)
+	if err != nil {
+		logger.Printf("构造用户消息失败: %v\n", err)
+		if cb.EmitEvent != nil {
+			cb.EmitEvent("solution-error", err.Error())
 		}
-	}
-
-	if req.Config.ResumeContent != "" {
-		logger.Println("使用 Markdown 简历内容")
-		systemPrompt.WriteString("\n\n<CandidateProfile>\n")
-		systemPrompt.WriteString("  <ResumeSummary>\n")
-		systemPrompt.WriteString(req.Config.ResumeContent)
-		systemPrompt.WriteString("\n  </ResumeSummary>\n")
-		systemPrompt.WriteString("</CandidateProfile>\n")
-	}
-
-	// 当使用 DeepSeek 等纯文本模式时，追加固定三段式输出要求
-	if req.UseTextMode {
-		systemPrompt.WriteString("\n\n<OutputStructure>\n")
-		systemPrompt.WriteString("你必须按以下三个部分回答编程算法题，不要有多余寒暄：\n")
-		systemPrompt.WriteString("1. 题目解析与解题思路：用中文简明说明题意、关键约束和解题思路。\n")
-		systemPrompt.WriteString("2. 完整 Python 代码：基于截图中已有的代码片段开头，继续写完可运行的完整 Python 代码，使用 ```python 代码块。\n")
-		systemPrompt.WriteString("3. 完整 C++ 代码：基于截图中已有的代码片段开头，继续写完可运行的完整 C++ 代码，使用 ```cpp 代码块。\n")
-		systemPrompt.WriteString("如果用户后续追问报错或要求修改，只针对上述 Python/C++ 代码进行修正，不要重新开题。\n")
-		systemPrompt.WriteString("</OutputStructure>\n")
-	}
-
-	logger.Println("system 提示词:", systemPrompt.String())
-
-	var currentUserMsg llm.Message
-	if req.UseTextMode {
-		// 纯文本模式：把 OCR 识别结果作为用户输入
-		userContent := req.OCRText
-		if userContent == "" && len(req.Screenshots) > 0 {
-			userContent = "（未能识别到文字，请检查截图内容）"
-		}
-		currentUserMsg = llm.NewUserMessage(userContent)
-	} else {
-		// 多模态模式：直接发送图片
-		userParts := make([]llm.ContentPart, 0, len(req.Screenshots))
-		for _, screenshot := range req.Screenshots {
-			userParts = append(userParts, llm.ImagePart(screenshot))
-		}
-		currentUserMsg = llm.NewMultiPartMessage(llm.RoleUser, userParts)
+		return false
 	}
 
 	// 新题目清空历史；追问保留历史
@@ -111,7 +70,6 @@ func (s *Solver) Solve(ctx context.Context, req Request, cb Callbacks) bool {
 		s.chatHistory = make([]llm.Message, 0)
 	}
 
-	s.ensureSystemPrompt(systemPrompt.String())
 	s.chatHistory = append(s.chatHistory, currentUserMsg)
 	s.trimChatHistory()
 
@@ -172,44 +130,57 @@ func (s *Solver) Solve(ctx context.Context, req Request, cb Callbacks) bool {
 	return true
 }
 
-// ensureSystemPrompt keeps the first history message aligned with the active system prompt.
-func (s *Solver) ensureSystemPrompt(prompt string) {
-	if len(s.chatHistory) == 0 {
-		s.chatHistory = append(s.chatHistory, llm.NewSystemMessage(prompt))
-		logger.Println("插入 SystemPrompt")
-		return
-	}
+func buildUserMessage(req Request) (llm.Message, error) {
+	userText := strings.TrimSpace(req.UserText)
+	ocrText := strings.TrimSpace(req.OCRText)
 
-	if s.chatHistory[0].Role == llm.RoleSystem {
-		if s.chatHistory[0].Content != prompt {
-			s.chatHistory[0] = llm.NewSystemMessage(prompt)
-			logger.Println("替换 SystemPrompt")
+	if req.UseTextMode {
+		parts := make([]string, 0, 2)
+		if userText != "" {
+			parts = append(parts, userText)
 		}
-		return
+		if len(req.Screenshots) > 0 {
+			if ocrText == "" && userText == "" {
+				return llm.Message{}, fmt.Errorf("当前模型不支持图片输入，截图 OCR 尚未得到可发送文本；请稍等 OCR 完成，或手动输入问题")
+			}
+			if userText == "" && ocrText != "" {
+				parts = append(parts, ocrText)
+			}
+		}
+		if len(parts) == 0 {
+			return llm.Message{}, fmt.Errorf("请输入消息或先添加截图附件")
+		}
+		return llm.NewUserMessage(strings.Join(parts, "\n\n")), nil
 	}
 
-	s.chatHistory = append([]llm.Message{llm.NewSystemMessage(prompt)}, s.chatHistory...)
-	logger.Println("插入 SystemPrompt 到消息历史头部")
+	if userText == "" && len(req.Screenshots) == 0 {
+		return llm.Message{}, fmt.Errorf("请输入消息或先添加截图附件")
+	}
+
+	userParts := make([]llm.ContentPart, 0, len(req.Screenshots)+1)
+	if userText != "" {
+		userParts = append(userParts, llm.TextPart(userText))
+	}
+	for _, screenshot := range req.Screenshots {
+		if strings.TrimSpace(screenshot) == "" {
+			continue
+		}
+		userParts = append(userParts, llm.ImagePart(screenshot))
+	}
+	if len(userParts) == 0 {
+		return llm.Message{}, fmt.Errorf("请输入消息或先添加截图附件")
+	}
+	return llm.NewMultiPartMessage(llm.RoleUser, userParts), nil
 }
 
 // trimChatHistory keeps only the most recent conversation rounds.
 func (s *Solver) trimChatHistory() {
-	if len(s.chatHistory) <= 1 {
-		return
-	}
-
-	nonSystemMsgs := len(s.chatHistory) - 1
 	maxNonSystemMsgs := MaxConversationRounds * 2
-	if nonSystemMsgs <= maxNonSystemMsgs {
+	if len(s.chatHistory) <= maxNonSystemMsgs {
 		return
 	}
-
-	startIndex := len(s.chatHistory) - maxNonSystemMsgs
-	newHistory := make([]llm.Message, 0, maxNonSystemMsgs+1)
-	newHistory = append(newHistory, s.chatHistory[0])
-	newHistory = append(newHistory, s.chatHistory[startIndex:]...)
 
 	oldLen := len(s.chatHistory)
-	s.chatHistory = newHistory
+	s.chatHistory = append([]llm.Message(nil), s.chatHistory[len(s.chatHistory)-maxNonSystemMsgs:]...)
 	logger.Printf("裁剪对话历史: %d -> %d 条消息 (保留最近 %d 轮对话)", oldLen, len(s.chatHistory), MaxConversationRounds)
 }

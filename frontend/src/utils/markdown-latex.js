@@ -90,18 +90,7 @@ function preprocessLatex(text) {
         return ph
     })
 
-    // 3. 行内公式 [...] (AI 常用格式)
-    text = text.replace(/\[\s*([^[\]]*(?:\\[a-zA-Z]+|[=+\-*/^_{}])[^[\]]*)\s*\]/g, (match, latex) => {
-        if (/^\s*[^\\=+\-*/^_{}]+\s*$/.test(latex)) {
-            return match
-        }
-        const ph = `%%LATEX_INLINE_${idx}%%`
-        placeholders.push({ ph, html: renderLatex(latex.trim(), false) })
-        idx++
-        return ph
-    })
-
-    // 4. 行内公式 \(...\)
+    // 3. 行内公式 \(...\)
     text = text.replace(/\\\(([\s\S]+?)\\\)/g, (_, latex) => {
         const ph = `%%LATEX_INLINE_${idx}%%`
         placeholders.push({ ph, html: renderLatex(latex.trim(), false) })
@@ -109,8 +98,9 @@ function preprocessLatex(text) {
         return ph
     })
 
-    // 5. 行内公式 $...$
-    text = text.replace(/(?<!\$)\$(?!\$)([^$]+?)(?<!\$)\$(?!\$)/g, (_, latex) => {
+    // 4. 行内公式 $...$，仅渲染明显的数学内容，避免价格/变量文本误判。
+    text = text.replace(/(?<!\$)\$(?!\$)([^$\n]+?)(?<!\$)\$(?!\$)/g, (match, latex) => {
+        if (!looksLikeInlineLatex(latex)) return match
         const ph = `%%LATEX_INLINE_${idx}%%`
         placeholders.push({ ph, html: renderLatex(latex.trim(), false) })
         idx++
@@ -118,6 +108,14 @@ function preprocessLatex(text) {
     })
 
     return { text, placeholders }
+}
+
+function looksLikeInlineLatex(latex) {
+    const value = latex.trim()
+    if (!value) return false
+    if (/\s{2,}/.test(value)) return false
+    if (/^\d+(\.\d+)?(\s|$)/.test(value)) return false
+    return /\\[a-zA-Z]+|[=+\-*/^_{}<>]|[a-zA-Z]\d|\d[a-zA-Z]/.test(value)
 }
 
 function postprocessLatex(html, placeholders) {
@@ -146,6 +144,60 @@ function normalizeCodeFences(text) {
     return text
 }
 
+// ==================== Markdown 误判保护 ====================
+
+function transformOutsideCode(text, transform) {
+    const lines = text.split('\n')
+    let inFence = false
+    let fenceMarker = ''
+
+    return lines.map((line) => {
+        const trimmed = line.trimStart()
+        const fenceMatch = trimmed.match(/^(```|~~~)/)
+        if (fenceMatch) {
+            const marker = fenceMatch[1]
+            if (!inFence) {
+                inFence = true
+                fenceMarker = marker
+            } else if (marker === fenceMarker) {
+                inFence = false
+                fenceMarker = ''
+            }
+            return line
+        }
+
+        if (inFence) return line
+        return transformOutsideInlineCode(line, transform)
+    }).join('\n')
+}
+
+function transformOutsideInlineCode(text, transform) {
+    let result = ''
+    let lastIndex = 0
+    const inlineCodeRE = /`+[^`]*`+/g
+    let match
+
+    while ((match = inlineCodeRE.exec(text)) !== null) {
+        result += transform(text.slice(lastIndex, match.index))
+        result += match[0]
+        lastIndex = match.index + match[0].length
+    }
+
+    result += transform(text.slice(lastIndex))
+    return result
+}
+
+function protectAlgorithmText(text) {
+    return transformOutsideCode(text, (chunk) => {
+        return chunk
+            // a*b*c、left*right 等乘法表达式不能被 Markdown 当斜体吞掉。
+            .replace(/([A-Za-z0-9_\]\)])\*\*(?=[A-Za-z0-9_\[\(])/g, '$1\\*\\*')
+            .replace(/([A-Za-z0-9_\]\)])\*(?=[A-Za-z0-9_\[\(])/g, '$1\\*')
+            // __init__、__len__ 这类标识符在算法/代码说明里必须原样显示。
+            .replace(/(^|[^\w])__(\w[\w\d]*)__(?=$|[^\w])/g, '$1\\_\\_$2\\_\\_')
+    })
+}
+
 // ==================== 主渲染函数 ====================
 
 /**
@@ -160,6 +212,7 @@ export function renderMarkdownWithLatex(md) {
 
     // 修复代码围栏格式（AI 音频转录等场景下 ``` 可能不在行首）
     md = normalizeCodeFences(md)
+    md = protectAlgorithmText(md)
 
     const { text, placeholders } = preprocessLatex(md)
     let html = marked.parse(text)
@@ -350,12 +403,8 @@ function findParagraphBoundary(text) {
  */
 function renderPartialTail(text) {
     let html = escapeHtml(text)
-    // Bold: **text**
-    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     // Inline code: `code`
     html = html.replace(/`([^`]+)`/g, '<code>$1</code>')
-    // Italic: *text*
-    html = html.replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, '<em>$1</em>')
     return html
 }
 
@@ -388,8 +437,26 @@ function escapeCodeHtml(text) {
 
 const COPY_ICON_SVG = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>'
 
+marked.setOptions({
+    gfm: true,
+    breaks: true,
+    silent: true
+})
+
 marked.use({
     renderer: {
+        html({ text, raw }) {
+            return escapeCodeHtml(raw || text || '')
+        },
+        checkbox({ checked }) {
+            return checked ? '[x] ' : '[ ] '
+        },
+        strong(token) {
+            if (token.raw?.startsWith('__') && token.raw?.endsWith('__')) {
+                return escapeCodeHtml(token.raw)
+            }
+            return `<strong>${this.parser.parseInline(token.tokens)}</strong>`
+        },
         code({ text, lang }) {
             const langLabel = lang ? lang.split(/\s/)[0].toLowerCase() : ''
 
@@ -398,14 +465,6 @@ marked.use({
             if (langLabel && hljs.getLanguage(langLabel)) {
                 try {
                     highlighted = hljs.highlight(text, { language: langLabel }).value
-                } catch {
-                    highlighted = escapeCodeHtml(text)
-                }
-            } else if (text.length < 8000) {
-                // 未指定语言时尝试自动检测（限制长度避免性能问题）
-                try {
-                    const result = hljs.highlightAuto(text)
-                    highlighted = result.relevance > 5 ? result.value : escapeCodeHtml(text)
                 } catch {
                     highlighted = escapeCodeHtml(text)
                 }

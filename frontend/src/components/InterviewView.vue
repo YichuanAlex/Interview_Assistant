@@ -126,8 +126,7 @@ async function toggleTranscription() {
       ui.showToast(err, 'error', 2000)
     }
   } else {
-    // 面试官：系统音频/会议软件；面试者：MacBook Pro 麦克风
-    const err = await api.startTranscription('OrayVirtualAudioDevice', 'MacBook Pro', './models/small', 'zh')
+    const err = await api.startTranscription('', '', './models/large-v3-turbo', 'zh')
     if (err) {
       interview.setStatusMessage('启动失败: ' + err)
       ui.showToast('启动转录失败', 'error', 3000)

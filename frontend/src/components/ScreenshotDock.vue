@@ -3,7 +3,7 @@
     <div v-if="screenshots.length > 0" class="screenshot-dock" style="--wails-draggable: no-drag">
       <div class="dock-label">
         <Icon name="camera" :size="14" />
-        <span class="dock-count">{{ screenshots.length }}/3</span>
+        <span class="dock-count">{{ screenshots.length }}</span>
       </div>
       <div class="dock-divider" />
       <div class="dock-thumbs">
@@ -104,9 +104,13 @@ defineExpose({ screenshots })
 
 .dock-thumbs {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--sp-2);
   flex: 1;
   min-width: 0;
+  max-width: 360px;
+  max-height: 92px;
+  overflow-y: auto;
 }
 
 .thumb-card {

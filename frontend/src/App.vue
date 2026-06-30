@@ -7,8 +7,7 @@
     </div>
     <div class="split-divider" />
     <div class="split-right">
-      <WelcomeView v-if="!ui.hasStarted && solution.history.length === 0" />
-      <SolveView v-else />
+      <SolveView />
     </div>
   </div>
 
@@ -48,7 +47,6 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 import TopBar from './components/TopBar.vue'
-import WelcomeView from './components/WelcomeView.vue'
 import SolveView from './components/SolveView.vue'
 import InterviewView from './components/InterviewView.vue'
 import ScreenshotDock from './components/ScreenshotDock.vue'
@@ -139,7 +137,15 @@ onMounted(() => {
     }
   })
 
-  on('user-message', (screenshot) => solution.setUserScreenshot(screenshot))
+  on('screenshot-taken', () => {
+    ui.hasStarted = true
+    ui.mainVisible = true
+  })
+
+  on('user-message', (screenshots, text) => {
+    solution.setUserAttachments(screenshots || [])
+    solution.setUserText(text || '')
+  })
 
   on('user-text', (text) => {
     solution.setUserText(text || '')

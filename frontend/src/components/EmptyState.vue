@@ -7,7 +7,7 @@
       </div>
       <h3 class="empty-title">准备就绪</h3>
       <p class="empty-desc">
-        按 <kbd class="shortcut-key">{{ shortcut }}</kbd> 截图，<kbd class="shortcut-key">{{ sendShortcut }}</kbd> 发送解题
+        按 <kbd class="shortcut-key">{{ shortcut }}</kbd> 添加截图，<kbd class="shortcut-key">{{ sendShortcut }}</kbd> 发送消息
       </p>
     </div>
   </div>
@@ -37,7 +37,8 @@ const contentOpacity = computed(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
   position: relative;
   overflow: hidden;
 }

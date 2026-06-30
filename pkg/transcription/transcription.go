@@ -69,7 +69,7 @@ func (s *TranscriptionService) Start(device int, deviceName string, model string
 	}
 
 	if model == "" {
-		model = "./models/small"
+		model = "./models/large-v3-turbo"
 	}
 	if language == "" {
 		language = "zh"
@@ -83,7 +83,7 @@ func (s *TranscriptionService) Start(device int, deviceName string, model string
 	}
 	if deviceName != "" {
 		args = append(args, "--device-name", deviceName)
-	} else {
+	} else if device >= 0 {
 		args = append(args, "--device", fmt.Sprintf("%d", device))
 	}
 	if s.role != "" {
@@ -114,7 +114,13 @@ func (s *TranscriptionService) Start(device int, deviceName string, model string
 	go s.readStderr(stderr)
 	go s.waitExit()
 
-	logger.Printf("实时转录已启动: device=%d model=%s language=%s\n", device, model, language)
+	deviceLabel := "auto"
+	if deviceName != "" {
+		deviceLabel = deviceName
+	} else if device >= 0 {
+		deviceLabel = fmt.Sprintf("%d", device)
+	}
+	logger.Printf("实时转录已启动: device=%s model=%s language=%s\n", deviceLabel, model, language)
 	if s.emitFunc != nil {
 		s.emitFunc("transcription-status", "started")
 	}

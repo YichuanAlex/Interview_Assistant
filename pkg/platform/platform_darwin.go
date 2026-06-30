@@ -4,7 +4,7 @@ package platform
 
 /*
 #cgo CFLAGS: -x objective-c
-#cgo LDFLAGS: -framework Cocoa -framework AppKit -framework CoreGraphics -framework AVFoundation
+#cgo LDFLAGS: -framework Cocoa -framework AppKit -framework CoreGraphics -framework AVFoundation -framework UniformTypeIdentifiers
 
 #import <Cocoa/Cocoa.h>
 #import <CoreGraphics/CoreGraphics.h>

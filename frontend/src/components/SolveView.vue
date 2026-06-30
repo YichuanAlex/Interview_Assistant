@@ -21,9 +21,9 @@
 
           <div class="chat-round">
             <!-- User message -->
-            <div v-if="round.userScreenshot || round.userText" class="user-message">
-              <div v-if="round.userScreenshot" class="user-screenshot">
-                <img :src="round.userScreenshot" alt="screenshot" />
+            <div v-if="getRoundScreenshots(round).length || round.userText" class="user-message">
+              <div v-if="getRoundScreenshots(round).length" class="user-screenshots">
+                <img v-for="(img, imageIdx) in getRoundScreenshots(round)" :key="imageIdx" :src="img" alt="attachment" />
               </div>
               <div v-if="round.userText" class="user-text">
                 <pre>{{ round.userText }}</pre>
@@ -115,6 +115,12 @@ const hasAnyContent = computed(() => {
   if (!rounds || rounds.length === 0) return false
   return rounds.some(r => r.aiResponse || r.thinking)
 })
+
+function getRoundScreenshots(round) {
+  if (!round) return []
+  if (Array.isArray(round.userScreenshots)) return round.userScreenshots.filter(Boolean)
+  return round.userScreenshot ? [round.userScreenshot] : []
+}
 </script>
 
 <style scoped>
@@ -143,6 +149,8 @@ const hasAnyContent = computed(() => {
   min-width: 0;
   display: flex;
   flex-direction: column;
+  background: var(--surface-card);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   overflow: hidden;
 }
@@ -176,7 +184,14 @@ const hasAnyContent = computed(() => {
   margin-bottom: var(--sp-2);
 }
 
-.user-screenshot img {
+.user-screenshots {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+}
+
+.user-screenshots img {
   max-width: 240px;
   max-height: 160px;
   border-radius: var(--radius-md);

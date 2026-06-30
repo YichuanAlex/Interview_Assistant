@@ -1,0 +1,9 @@
+./app.go
+./llm.go
+./misc.go
+./resume.go
+./screen.go
+./settings.go
+./shortcut.go
+./solve.go
+./window.go

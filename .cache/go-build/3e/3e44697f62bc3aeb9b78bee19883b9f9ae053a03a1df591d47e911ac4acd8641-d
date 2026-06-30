@@ -1,0 +1,18 @@
+# test log
+getenv GOTMPDIR
+getenv TMPDIR
+stat /var/folders/zg/pn0_s6s11cl5ngv8ww__z1m40000ks/T/TestGenerateHintUsesPersonalKnowledge32455855/001/material/mine
+stat /var/folders/zg/pn0_s6s11cl5ngv8ww__z1m40000ks/T/TestGenerateHintUsesPersonalKnowledge32455855/001/material
+stat /var/folders/zg/pn0_s6s11cl5ngv8ww__z1m40000ks/T/TestGenerateHintUsesPersonalKnowledge32455855/001
+stat /var/folders/zg/pn0_s6s11cl5ngv8ww__z1m40000ks/T/TestGenerateHintUsesPersonalKnowledge32455855/001/material/preparation
+stat /var/folders/zg/pn0_s6s11cl5ngv8ww__z1m40000ks/T/TestGenerateHintUsesPersonalKnowledge32455855/001/material
+open /var/folders/zg/pn0_s6s11cl5ngv8ww__z1m40000ks/T/TestGenerateHintUsesPersonalKnowledge32455855/001/material/mine/profile.md
+stat /var/folders/zg/pn0_s6s11cl5ngv8ww__z1m40000ks/T/TestGenerateHintUsesPersonalKnowledge32455855/001/material/mine
+stat /var/folders/zg/pn0_s6s11cl5ngv8ww__z1m40000ks/T/TestGenerateHintUsesPersonalKnowledge32455855/001/material/mine
+open /var/folders/zg/pn0_s6s11cl5ngv8ww__z1m40000ks/T/TestGenerateHintUsesPersonalKnowledge32455855/001/material/mine
+open /var/folders/zg/pn0_s6s11cl5ngv8ww__z1m40000ks/T/TestGenerateHintUsesPersonalKnowledge32455855/001/material/mine/profile.md
+getenv PWD
+stat /var/folders/zg/pn0_s6s11cl5ngv8ww__z1m40000ks/T/TestGenerateHintUsesPersonalKnowledge32455855/001/material/preparation
+stat /var/folders/zg/pn0_s6s11cl5ngv8ww__z1m40000ks/T/TestGenerateHintUsesPersonalKnowledge32455855/001/material/preparation
+open /var/folders/zg/pn0_s6s11cl5ngv8ww__z1m40000ks/T/TestGenerateHintUsesPersonalKnowledge32455855/001/material/preparation
+open /var/folders/zg/pn0_s6s11cl5ngv8ww__z1m40000ks/T

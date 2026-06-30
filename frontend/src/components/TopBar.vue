@@ -16,7 +16,7 @@
         <div class="logo">Q</div>
         <div class="scene-pill">
           <Icon name="camera" :size="14" />
-          <span>截图解题</span>
+          <span>AI 对话</span>
         </div>
       </div>
 

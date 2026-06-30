@@ -14,6 +14,11 @@ func (a *App) GetScreenshotPreview(quality int, sharpen float64, grayscale bool,
 	return a.screenService.CapturePreview(quality, sharpen, grayscale, noCompression, mode)
 }
 
+// GetSelectionScreenshotPreview 获取用户框选区域截图。
+func (a *App) GetSelectionScreenshotPreview(quality int, sharpen float64, grayscale bool, noCompression bool) (screen.PreviewResult, error) {
+	return a.screenService.CaptureInteractiveSelection(quality, sharpen, grayscale, noCompression)
+}
+
 // CheckScreenCapturePermission 检查截图权限 (macOS)
 func (a *App) CheckScreenCapturePermission() bool {
 	return platform.CheckScreenCaptureAccess()

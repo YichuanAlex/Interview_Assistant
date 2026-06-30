@@ -24,7 +24,7 @@ export const useSolutionStore = defineStore('solution', () => {
   let thinkingBuffer = ''
   let thinkingStartTime = 0
   let stallTimer = null
-  let pendingUserScreenshot = ''
+  let pendingUserScreenshots = []
   let pendingUserText = ''
 
   // 流式渲染：节流 + 全量渲染
@@ -69,17 +69,33 @@ export const useSolutionStore = defineStore('solution', () => {
     return item.rounds.map(r => r.aiResponse || '').join('\n\n---\n\n')
   }
 
-  function createHistoryItem(userScreenshot, userText = '') {
+  function normalizeScreenshots(screenshots) {
+    if (!screenshots) return []
+    if (Array.isArray(screenshots)) return screenshots.filter(Boolean)
+    return screenshots ? [screenshots] : []
+  }
+
+  function createHistoryItem(userScreenshots, userText = '') {
+    const screenshots = normalizeScreenshots(userScreenshots)
     return {
       time: new Date().toLocaleTimeString(),
-      rounds: [{ userScreenshot: userScreenshot || '', userText: userText || '', thinking: '', aiResponse: '', error: null }],
+      rounds: [{
+        userScreenshots: screenshots,
+        userScreenshot: screenshots[0] || '',
+        userText: userText || '',
+        thinking: '',
+        aiResponse: '',
+        error: null,
+      }],
     }
   }
 
-  function addRoundToItem(item, userScreenshot, userText = '') {
+  function addRoundToItem(item, userScreenshots, userText = '') {
+    const screenshots = normalizeScreenshots(userScreenshots)
     if (!item.rounds) item.rounds = []
     item.rounds.push({
-      userScreenshot: userScreenshot || '',
+      userScreenshots: screenshots,
+      userScreenshot: screenshots[0] || '',
       userText: userText || '',
       thinking: '',
       thinkingStatus: 'Thinking Process',
@@ -131,26 +147,30 @@ export const useSolutionStore = defineStore('solution', () => {
 
     // 单轮多对话模式：只保留一个当前对话，不再维护多个历史题目
     if (history.value.length === 0) {
-      history.value.push(createHistoryItem(pendingUserScreenshot, pendingUserText))
+      history.value.push(createHistoryItem(pendingUserScreenshots, pendingUserText))
     } else {
       const shouldAppend = isFollowUp || (keepContext && !shouldOverwriteHistory.value)
       const currentItem = history.value[0]
       if (shouldAppend) {
         const lastRound = getCurrentRound(currentItem)
         if (lastRound && lastRound.error) {
-          lastRound.userScreenshot = pendingUserScreenshot || lastRound.userScreenshot
+          const screenshots = normalizeScreenshots(pendingUserScreenshots)
+          lastRound.userScreenshots = screenshots.length ? screenshots : normalizeScreenshots(lastRound.userScreenshots || lastRound.userScreenshot)
+          lastRound.userScreenshot = lastRound.userScreenshots[0] || ''
           lastRound.userText = pendingUserText || lastRound.userText
           lastRound.thinking = ''
           lastRound.thinkingStatus = 'Thinking Process'
           lastRound.aiResponse = ''
           lastRound.error = null
         } else {
-          addRoundToItem(currentItem, pendingUserScreenshot, pendingUserText)
+          addRoundToItem(currentItem, pendingUserScreenshots, pendingUserText)
         }
       } else {
+        const screenshots = normalizeScreenshots(pendingUserScreenshots)
         // 新题目：重置当前对话的 rounds
         currentItem.rounds = [{
-          userScreenshot: pendingUserScreenshot || '',
+          userScreenshots: screenshots,
+          userScreenshot: screenshots[0] || '',
           userText: pendingUserText || '',
           thinking: '',
           thinkingStatus: 'Thinking Process',
@@ -162,7 +182,7 @@ export const useSolutionStore = defineStore('solution', () => {
       shouldOverwriteHistory.value = false
     }
     activeHistoryIndex.value = 0
-    pendingUserScreenshot = ''
+    pendingUserScreenshots = []
     pendingUserText = ''
   }
 
@@ -267,7 +287,8 @@ export const useSolutionStore = defineStore('solution', () => {
   }
 
   function setStreamBuffer(val) { streamBuffer = val }
-  function setUserScreenshot(screenshot) { pendingUserScreenshot = screenshot }
+  function setUserScreenshot(screenshot) { pendingUserScreenshots = normalizeScreenshots(screenshot) }
+  function setUserAttachments(screenshots) { pendingUserScreenshots = normalizeScreenshots(screenshots) }
   function setUserText(text) { pendingUserText = text || '' }
   function setOCRText(val) { ocrText.value = val || '' }
 
@@ -295,9 +316,16 @@ export const useSolutionStore = defineStore('solution', () => {
     userHeader.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid #f1f5f9;'
     userHeader.innerHTML = `<div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#4f46e5);display:flex;align-items:center;justify-content:center;color:white;font-size:12px;">👤</div><div><div style="font-weight:600;font-size:12px;color:#334155;">问题 ${roundIndex + 1}</div></div>`
     leftPanel.appendChild(userHeader)
-    if (round.userScreenshot) {
+    const screenshots = normalizeScreenshots(round.userScreenshots || round.userScreenshot)
+    if (screenshots.length > 0) {
       const imgC = document.createElement('div')
-      imgC.innerHTML = `<img src="${round.userScreenshot}" style="width:100%;border-radius:6px;border:1px solid #e2e8f0;" />`
+      imgC.style.cssText = 'display:grid;grid-template-columns:1fr;gap:8px;'
+      screenshots.forEach((src) => {
+        const img = document.createElement('img')
+        img.src = src
+        img.style.cssText = 'width:100%;border-radius:6px;border:1px solid #e2e8f0;'
+        imgC.appendChild(img)
+      })
       leftPanel.appendChild(imgC)
     } else {
       const ph = document.createElement('div')
@@ -360,7 +388,7 @@ export const useSolutionStore = defineStore('solution', () => {
     renderMarkdown, getSummary, getRoundsCount, getFullContent, getThinkingPreview,
     selectHistory, handleStreamStart, handleStreamChunk, handleThinkingChunk,
     handleSolution, handleInlineError, clearInlineError,
-    setStreamBuffer, setUserScreenshot, setUserText, setOCRText, deleteHistory, exportImage,
+    setStreamBuffer, setUserScreenshot, setUserAttachments, setUserText, setOCRText, deleteHistory, exportImage,
     ocrText,
   }
 })

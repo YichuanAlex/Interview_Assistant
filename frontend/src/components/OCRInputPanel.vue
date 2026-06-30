@@ -2,14 +2,15 @@
   <div class="ocr-input-panel" style="--wails-draggable: no-drag">
     <div class="ocr-header">
       <Icon name="text" :size="13" />
-      <span class="ocr-title">识别文本 / 输入消息</span>
-      <span v-if="isDeepSeek" class="ocr-badge">DeepSeek 文本模式</span>
+      <span class="ocr-title">消息</span>
+      <span v-if="attachmentCount > 0" class="ocr-badge">{{ attachmentCount }} 个附件</span>
+      <span v-if="isDeepSeek" class="ocr-badge">文本模型</span>
     </div>
     <textarea
       ref="textareaRef"
       v-model="localText"
       class="ocr-textarea"
-      placeholder="截图后自动填入 OCR 文字；回答后可粘贴报错继续追问；Shift+Enter 换行"
+      placeholder="输入消息；截图后 OCR 文本会自动追加到这里；Shift+Enter 换行"
       @keydown.enter.prevent="handleEnter"
     />
     <div class="ocr-actions">
@@ -29,6 +30,7 @@ import { ref, computed, watch, nextTick } from 'vue'
 import { useSolutionStore } from '../stores/solution'
 import { useSettingsStore } from '../stores/settings'
 import { api } from '../services/api'
+import { on } from '../services/events'
 import Icon from './Icon.vue'
 
 const solution = useSolutionStore()
@@ -36,6 +38,7 @@ const settingsStore = useSettingsStore()
 
 const localText = ref('')
 const textareaRef = ref(null)
+const attachmentCount = ref(0)
 
 const sendShortcut = computed(() => settingsStore.sendShortcut || 'Cmd+J')
 
@@ -45,7 +48,7 @@ const isDeepSeek = computed(() => {
   return url.includes('deepseek') || model.includes('deepseek')
 })
 
-const canSend = computed(() => localText.value.trim().length > 0)
+const canSend = computed(() => localText.value.trim().length > 0 || attachmentCount.value > 0)
 
 // 当后端识别到新文字时，追加到输入框
 watch(() => solution.ocrText, (val) => {
@@ -63,6 +66,26 @@ watch(() => solution.ocrText, (val) => {
   }
 })
 
+on('screenshot-taken', () => {
+  attachmentCount.value += 1
+})
+
+on('screenshot-removed', () => {
+  attachmentCount.value = Math.max(0, attachmentCount.value - 1)
+})
+
+on('screenshots-cleared', () => {
+  attachmentCount.value = 0
+})
+
+on('start-solving', () => {
+  attachmentCount.value = 0
+})
+
+on('request-chat-send', () => {
+  send()
+})
+
 function handleEnter(e) {
   if (!e.shiftKey) {
     send()
@@ -73,10 +96,9 @@ function handleEnter(e) {
 
 async function send() {
   const text = localText.value.trim()
-  if (!text) return
+  if (!text && attachmentCount.value === 0) return
 
   localText.value = ''
-  // 通过 sendTextMessage 发送会作为当前对话的追问，保留上下文
   await api.sendTextMessage(text)
 }
 </script>

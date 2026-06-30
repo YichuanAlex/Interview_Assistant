@@ -41,8 +41,8 @@ export const useSettingsStore = defineStore('settings', () => {
   const recordingAction = ref(null)
   const recordingText = ref('')
   const shortcutActions = [
-    { action: 'screenshot', label: '截图', default: 'F8', macDefault: 'Cmd+1' },
-    { action: 'send', label: '发送解题', default: 'Ctrl+J', macDefault: 'Cmd+J' },
+    { action: 'screenshot', label: '框选截图', default: 'F8', macDefault: 'Cmd+1' },
+    { action: 'send', label: '发送消息', default: 'Ctrl+J', macDefault: 'Cmd+J' },
     { action: 'delete', label: '删除截图', default: 'Ctrl+D', macDefault: 'Cmd+D' },
     { action: 'toggle', label: '隐藏/显示', default: 'F9', macDefault: 'Cmd+2' },
     { action: 'clickthrough', label: '鼠标穿透', default: 'F10', macDefault: 'Cmd+3' },
