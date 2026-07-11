@@ -2089,19 +2089,6 @@
       "text"
     ]
   },
-  "trinity-mini": {
-    "provider": "arcee-ai",
-    "name": "Arcee AI: Trinity Mini",
-    "description": "Trinity Mini is a 26B-parameter (3B active) sparse mixture-of-experts language model featuring 128 experts with 8 active per token. Engineered for efficient reasoning over long contexts (131k) with robust function...",
-    "supports_image": false,
-    "context_length": 131072,
-    "inputs": [
-      "text"
-    ],
-    "outputs": [
-      "text"
-    ]
-  },
   "deepseek-v3.2": {
     "provider": "deepseek",
     "name": "DeepSeek: DeepSeek V3.2",
@@ -4414,19 +4401,6 @@
       "text",
       "image",
       "file"
-    ],
-    "outputs": [
-      "text"
-    ]
-  },
-  "llama-3-8b-instruct": {
-    "provider": "meta-llama",
-    "name": "Meta: Llama 3 8B Instruct",
-    "description": "Meta's latest class of model (Llama 3) launched with a variety of sizes & flavors. This 8B instruct-tuned version was optimized for high quality dialogue usecases. It has demonstrated strong...",
-    "supports_image": false,
-    "context_length": 8192,
-    "inputs": [
-      "text"
     ],
     "outputs": [
       "text"
