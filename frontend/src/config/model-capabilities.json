@@ -1602,7 +1602,7 @@
     "name": "Google: Nano Banana 2 (Gemini 3.1 Flash Image Preview)",
     "description": "Gemini 3.1 Flash Image Preview, a.k.a. \"Nano Banana 2,\" is Google’s latest state of the art image generation and editing model, delivering Pro-level visual quality at Flash speed. It combines...",
     "supports_image": true,
-    "context_length": 131072,
+    "context_length": 65536,
     "inputs": [
       "image",
       "text"
@@ -3779,19 +3779,6 @@
       "text"
     ]
   },
-  "gpt-4o-mini-search-preview": {
-    "provider": "openai",
-    "name": "OpenAI: GPT-4o-mini Search Preview",
-    "description": "GPT-4o mini Search Preview is a specialized model for web search in Chat Completions. It is trained to understand and execute web search queries.",
-    "supports_image": false,
-    "context_length": 128000,
-    "inputs": [
-      "text"
-    ],
-    "outputs": [
-      "text"
-    ]
-  },
   "gpt-4o-search-preview": {
     "provider": "openai",
     "name": "OpenAI: GPT-4o Search Preview",
@@ -4230,32 +4217,6 @@
     "description": "Qwen2.5 7B is the latest series of Qwen large language models. Qwen2.5 brings the following improvements upon Qwen2: - Significantly more knowledge and has greatly improved capabilities in coding and...",
     "supports_image": false,
     "context_length": 32768,
-    "inputs": [
-      "text"
-    ],
-    "outputs": [
-      "text"
-    ]
-  },
-  "inflection-3-pi": {
-    "provider": "inflection",
-    "name": "Inflection: Inflection 3 Pi",
-    "description": "Inflection 3 Pi powers Inflection's [Pi](https://pi.ai) chatbot, including backstory, emotional intelligence, productivity, and safety. It has access to recent news, and excels in scenarios like customer support and roleplay. Pi...",
-    "supports_image": false,
-    "context_length": 8000,
-    "inputs": [
-      "text"
-    ],
-    "outputs": [
-      "text"
-    ]
-  },
-  "inflection-3-productivity": {
-    "provider": "inflection",
-    "name": "Inflection: Inflection 3 Productivity",
-    "description": "Inflection 3 Productivity is optimized for following instructions. It is better for tasks requiring JSON output or precise adherence to provided guidelines. It has access to recent news. For emotional...",
-    "supports_image": false,
-    "context_length": 8000,
     "inputs": [
       "text"
     ],
